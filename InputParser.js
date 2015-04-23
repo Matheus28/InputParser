@@ -300,9 +300,7 @@ function generateParser(str, atValue){
 		var lines = str.split('\n');
 		for(var i = 0; i < lines.length; ++i){
 			var line = lines[i];
-			var plus = countChar(line, '{');
-			var minus = countChar(line, '}');
-			var diff = plus - minus;
+			var diff = countChar(line, '{') - countChar(line, '}');
 			
 			if(diff >= 0){
 				for(var j = 0; j < depth; ++j) res += '\t';
