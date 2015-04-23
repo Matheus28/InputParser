@@ -205,7 +205,13 @@ function generateParser(str){
 		}else if(str[i] == '@'){
 			++i;
 			return '@\n';
-		}else if(str[i] == '"'){
+		}else if(str[i] == '"' || (str[i] == '*' && str[i + 1] == '"')){
+			var isIgnored = false;
+			if(str[i] == '*'){
+				++i;
+				isIgnored = true;
+			}
+			
 			var start = i;
 			++i;
 			while(str[i] != '"') ++i;
@@ -213,7 +219,7 @@ function generateParser(str){
 			var tmp = str.slice(start, end);
 			var res = '';
 			
-			res += 'printf(' + tmp + ');\n';
+			if(!isIgnored) res += 'printf(' + tmp + ');\n';
 			
 			tmp = tmp.replace(/%/g, "%%");
 			
@@ -371,6 +377,7 @@ console.log(generateParser("%*d*(%d*%d @)"));
 console.log(generateParser("%*d*(b=%d %d b*%d @)"));
 console.log(generateParser("%*d*(%d*(%d %d) @)"));
 console.log(generateParser("%*d*(%s @)"));
-console.log(generateParser('%*d*("he")'));
+console.log(generateParser('%*d*"he"'));
+console.log(generateParser('%*d**"he"'));
 
 
