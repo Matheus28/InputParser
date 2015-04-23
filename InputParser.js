@@ -194,6 +194,9 @@ function generateParser(str){
 			
 			++i;
 			return tmp;
+		}else if(str[i] == '@'){
+			++i;
+			return '@\n';
 		}
 		
 		throw "Unexpected character " + str[i];
@@ -238,5 +241,5 @@ function generateParser(str){
 	return code;
 }
 
-console.log(generateParser("%d*%d*%d"));
-console.log(generateParser("t=%d t*(n=%d n*%d)"));
+console.log(generateParser("%d*(%d*%d @)"));
+console.log(generateParser("%d*(b=%d %d b*%d)"));
