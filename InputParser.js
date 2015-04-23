@@ -4,6 +4,7 @@ function generateParser(str, atValue){
 	
 	var i = 0;
 	var code = "/* " + str + " */\n";
+	var needsScanString = false;
 	
 	var varTypes = {};
 	
@@ -170,7 +171,7 @@ function generateParser(str, atValue){
 			
 			var id = allocTmp();
 			
-			// Discard it?
+			// If we're not using the result of this expression, discard it
 			if(str[i] != '*'){
 				return scanf(format, null);
 			}
@@ -291,6 +292,7 @@ function generateParser(str, atValue){
 			
 			if(format.specifier == 's'){
 				if(format.length != "") throw new Error("Scanning wide strings isn't supported yet");
+				needsScanString = true;
 				tmp += id + ' = scan_string(' + (format.isIgnored ? '0' : '1') + ');\n';
 			}else{
 				tmp += 'scanf("' + format.format + '", ' + (hasAmpersand ? '&' : '') + id + ');\n';
@@ -345,35 +347,7 @@ function generateParser(str, atValue){
 	code += '#include <stdlib.h>\n';
 	code += '#include <ctype.h>\n';
 	code += '\n';
-	code += 'const char *scan_string(char printBack){\n';
-	code += '	for(;;){\n';
-	code += '		int ch = getchar();\n';
-	code += '		if(ch == EOF) return NULL;\n';
-	code += '		if(isspace(ch)) continue;\n';
-	code += '		break;\n';
-	code += '	}\n';
-	code += '	\n';
-	code += '	int capacity = 64;\n';
-	code += '	int len = 0;\n';
-	code += '	char *str = malloc(capacity);\n';
-	code += '	\n';
-	code += '	for(;;){\n';
-	code += '		int ch = getchar();\n';
-	code += '		if(ch == EOF || isspace(ch)) break;\n';
-	code += '		\n';
-	code += '		if(len + 2 >= capacity){\n';
-	code += '			capacity *= 2;\n';
-	code += '			str = realloc(str, capacity);\n';
-	code += '		}\n';
-	code += '		\n';
-	code += '		if(printBack) putchar(ch);\n';
-	code += '		str[len++] = ch;\n';
-	code += '	}\n';
-	code += '	\n';
-	code += '	str[len] = 0;\n';
-	code += '	if(printBack) putchar(\' \');\n';
-	code += '	return str;\n';
-	code += '}\n';
+	code += 'const char *scan_string(char printBack);\n'
 	code += '\n';
 	code += 'int main(){\n';
 	
@@ -384,6 +358,41 @@ function generateParser(str, atValue){
 	}
 	
 	code += '}\n';
+	
+	code += '\n';
+	if(needsScanString){
+		code += 'const char *scan_string(char printBack){\n';
+		code += '	for(;;){\n';
+		code += '		int ch = getchar();\n';
+		code += '		if(ch == EOF) return NULL;\n';
+		code += '		if(isspace(ch)) continue;\n';
+		code += '		break;\n';
+		code += '	}\n';
+		code += '	\n';
+		code += '	int capacity = 64;\n';
+		code += '	int len = 0;\n';
+		code += '	char *str = malloc(capacity);\n';
+		code += '	\n';
+		code += '	for(;;){\n';
+		code += '		int ch = getchar();\n';
+		code += '		if(ch == EOF || isspace(ch)) break;\n';
+		code += '		\n';
+		code += '		if(len + 2 >= capacity){\n';
+		code += '			capacity *= 2;\n';
+		code += '			str = realloc(str, capacity);\n';
+		code += '		}\n';
+		code += '		\n';
+		code += '		if(printBack) putchar(ch);\n';
+		code += '		str[len++] = ch;\n';
+		code += '	}\n';
+		code += '	\n';
+		code += '	str[len] = 0;\n';
+		code += '	if(printBack) putchar(\' \');\n';
+		code += '	return str;\n';
+		code += '}\n';
+	} else {
+		code += '/* Code for scan_string not generated: not used */\n';
+	}
 	
 	return code;
 }
