@@ -205,6 +205,20 @@ function generateParser(str){
 		}else if(str[i] == '@'){
 			++i;
 			return '@\n';
+		}else if(str[i] == '"'){
+			var start = i;
+			++i;
+			while(str[i] != '"') ++i;
+			var end = ++i;
+			var tmp = str.slice(start, end);
+			var res = '';
+			
+			res += 'printf(' + tmp + ');\n';
+			
+			tmp = tmp.replace(/%/g, "%%");
+			
+			res += 'scanf(' + tmp + ');\n';
+			return res;
 		}
 		
 		throw new Error("Unexpected character " + str[i]);
@@ -357,3 +371,6 @@ console.log(generateParser("%*d*(%d*%d @)"));
 console.log(generateParser("%*d*(b=%d %d b*%d @)"));
 console.log(generateParser("%*d*(%d*(%d %d) @)"));
 console.log(generateParser("%*d*(%s @)"));
+console.log(generateParser('%*d*("he")'));
+
+
