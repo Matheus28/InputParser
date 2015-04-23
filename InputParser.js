@@ -251,7 +251,9 @@ function generateParser(str, atValue){
 			
 			tmp = tmp.replace(/%/g, "%%%%");
 			
-			res += 'scanf(' + tmp + ');\n';
+			// FIXME this almost always returns 0, we need to code a way to check if it was actually successful
+			// Maybe get the last character from tmp, remove it, put a %c in its place, and check that?
+			res += 'if(scanf(' + tmp + ') != 0) return 1;\n';
 			if(!isIgnored) res += 'printf(' + tmp + ');\n';
 			return res;
 		}
@@ -296,7 +298,7 @@ function generateParser(str, atValue){
 	
 	function scanf(format, id){
 		if(id == null && format.isIgnored){
-			return 'scanf("' + format.ignoredFormat + '");\n';
+			return 'if(scanf("' + format.ignoredFormat + '") != 0) return 1;\n';
 		}else{
 			var tmp = '';
 			var hasAmpersand = true;
@@ -313,8 +315,9 @@ function generateParser(str, atValue){
 				if(format.length != "") throw new Error("Scanning wide strings isn't supported yet");
 				needsScanString = true;
 				tmp += id + ' = scan_string(' + (format.isIgnored ? '0' : '1') + ');\n';
+				tmp += 'if(' + id + ' == NULL) return 1;\n'
 			}else{
-				tmp += 'scanf("' + format.format + '", ' + (hasAmpersand ? '&' : '') + id + ');\n';
+				tmp += 'if(scanf(" ' + format.format + '", ' + (hasAmpersand ? '&' : '') + id + ') != 1) return 1;\n';
 				if(!format.isIgnored){
 					tmp += 'printf("' + format.format + ' ", ' + id + ');\n';
 				}
@@ -424,4 +427,5 @@ console.log(generateParser('%*d**"he"'));
 console.log(generateParser('%8c'));
 console.log(generateParser("%*d*(%d*(%f %f) @)"));
 console.log(generateParser('"should %d %f %s be escaped"'));
+console.log(generateParser('%*d*%c'));
 
