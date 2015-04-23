@@ -304,10 +304,7 @@ function generateParser(str, atValue){
 			var minus = countChar(line, '}');
 			var diff = plus - minus;
 			
-			if(diff == 0){
-				for(var j = 0; j < depth; ++j) res += '\t';
-				res += line;
-			}else if(diff > 0){
+			if(diff >= 0){
 				for(var j = 0; j < depth; ++j) res += '\t';
 				res += line;
 				depth += diff;
