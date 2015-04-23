@@ -162,6 +162,13 @@ function generateParser(str, atValue){
 		};
 	}
 	
+	function getInt(){
+		var start = i;
+		while(/^[0-9]$/.test(str[i])) ++i;
+		var end = i;
+		return parseInt(str.slice(start, end), 10);
+	}
+	
 	function hasIdentifier(){
 		return (/[a-z]/i).test(str[i]);
 	}
@@ -216,6 +223,18 @@ function generateParser(str, atValue){
 			var aux = allocTmp();
 			var tmp = '';
 			tmp += 'for(' + varTypes[id] + ' ' + aux + ' = 0; ' + aux + ' < ' + id + '; ++' + aux + '){\n';
+			tmp += parseExpression();
+			tmp += '}\n';
+			return tmp;
+		}else if(/^[0-9]$/.test(str[i])){
+			var n = getInt();
+			
+			if(str[i] != '*') throw new Error("Expected * after " + n + ", got " + str[i]);
+			++i;
+			
+			var aux = allocTmp();
+			var tmp = '';
+			tmp += 'for(int ' + aux + ' = 0; ' + aux + ' < ' + n + '; ++' + aux + '){\n';
 			tmp += parseExpression();
 			tmp += '}\n';
 			return tmp;
@@ -428,4 +447,9 @@ console.log(generateParser("%*d*(%d*(%f %f) @)"));
 console.log(generateParser('"should %d %f %s be escaped"'));
 console.log(generateParser('%*d*%c'));
 console.log(generateParser('%*d*%d*%s'));
+console.log(generateParser('%*d*(%d %d)'));
+console.log(generateParser('%*d*(n=%d n*n*%d)'));
+console.log(generateParser('%*d*%d*2*%s'));
+console.log(generateParser('%*d*2*%d*%s'));
+console.log(generateParser('%*d*5*%d'));
 
