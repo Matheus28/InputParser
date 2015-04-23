@@ -8,8 +8,12 @@ function generateParser(str){
 		var start = i;
 		if(str[i] != '%') throw "Expected %, got " + str[i];
 		++i;
-
-		//if(str[i] == '*') ++i;
+		
+		var isIgnored = false;
+		if(str[i] == '*'){
+			++i;
+			isIgnored = true;
+		}
 		
 		while(/^[0-9]$/.test(str[i])) ++i;
 		
@@ -122,9 +126,10 @@ function generateParser(str){
 			default: throw "Invalid input format " + res;
 		}
 		
+		var format = isIgnored ? "%" + str.slice(start + 2, end) : res;
 		return {
-			'format': res,
-			'ignoredFormat': '%*' + str.slice(start + 1, end),
+			'format': format,
+			'ignoredFormat': '%*' + format.slice(1),
 			'type': type,
 			'specifier': specifier
 		};
@@ -241,5 +246,6 @@ function generateParser(str){
 	return code;
 }
 
-console.log(generateParser("%d*(%d*%d @)"));
-console.log(generateParser("%d*(b=%d %d b*%d)"));
+console.log(generateParser("%*d*(%d*%d @)"));
+console.log(generateParser("%*d*(b=%d %d b*%d @)"));
+console.log(generateParser("%*d*(%d*(%d %d) @)"));
