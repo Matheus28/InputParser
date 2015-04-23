@@ -436,6 +436,7 @@ function generateParser(str, atValue){
 	return code;
 }
 
+/*
 console.log(generateParser("%*d*(%d*%d @)"));
 console.log(generateParser("%*d*(b=%d %d b*%d @)"));
 console.log(generateParser("%*d*(%d*(%d %d) @)"));
@@ -452,4 +453,8 @@ console.log(generateParser('%*d*(n=%d n*n*%d)'));
 console.log(generateParser('%*d*%d*2*%s'));
 console.log(generateParser('%*d*2*%d*%s'));
 console.log(generateParser('%*d*5*%d'));
+*/
 
+if(typeof exports != 'undefined'){
+	exports.generateParser = generateParser;
+}
