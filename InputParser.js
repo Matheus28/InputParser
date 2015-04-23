@@ -6,7 +6,7 @@ function generateParser(str){
 	
 	function parseFormat(){
 		var start = i;
-		if(str[i] != '%') throw "Expected %, got " + str[i];
+		if(str[i] != '%') throw new Error("Expected %, got " + str[i]);
 		++i;
 		
 		var isIgnored = false;
@@ -54,7 +54,7 @@ function generateParser(str){
 					case "j":  type = "intmax_t"; break;
 					case "z":  type = "size_t"; break;
 					case "t":  type = "ptrdiff_t"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
@@ -70,7 +70,7 @@ function generateParser(str){
 					case "j":  type = "uintmax_t"; break;
 					case "z":  type = "size_t"; break;
 					case "t":  type = "ptrdiff_t"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
@@ -82,7 +82,7 @@ function generateParser(str){
 					case "":  type = "float"; break;
 					case "l": type = "double"; break;
 					case "L": type = "long double"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
@@ -90,7 +90,7 @@ function generateParser(str){
 				switch(length){
 					case "":  type = "char"; break;
 					case "l": type = "wchar_t"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
@@ -98,14 +98,14 @@ function generateParser(str){
 				switch(length){
 					case "":  type = "STRING"; break;
 					case "l": type = "WSTRING"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
 			case 'p':
 				switch(length){
 					case "":  type = "void*"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
@@ -119,19 +119,20 @@ function generateParser(str){
 					case "j":  type = "intmax_t"; break;
 					case "z":  type = "size_t"; break;
 					case "t":  type = "ptrdiff_t"; break;
-					default: throw "Invalid input format " + res;
+					default: throw new Error("Invalid input format " + res);
 				}
 			break;
 			
-			default: throw "Invalid input format " + res;
+			default: throw new Error("Invalid input format " + res);
 		}
 		
 		var format = isIgnored ? "%" + str.slice(start + 2, end) : res;
 		return {
-			'format': format,
-			'ignoredFormat': '%*' + format.slice(1),
-			'type': type,
-			'specifier': specifier
+			format: format,
+			ignoredFormat: '%*' + format.slice(1),
+			isIgnored: isIgnored,
+			type: type,
+			specifier: specifier
 		};
 	}
 	
@@ -158,19 +159,20 @@ function generateParser(str){
 		if(hasFormat()){
 			var format = parseFormat();
 			
+			var id = allocTmp();
+			
 			// Discard it?
 			if(str[i] != '*'){
-				return 'scanf("' + format.ignoredFormat + '");\n'
+				return scanf(format, null);
 			}
 			
 			++i;
 			
 			var tmp = '';
-			var id = allocTmp();
 			var aux = allocTmp();
 			
 			tmp += format.type + ' ' + id + ', ' + aux + ';\n';
-			tmp += 'scanf("' + format.format + '", &' + id + ');\n';
+			tmp += scanf(format, id);
 			tmp += 'for(' + aux + ' = 0; ' + aux + ' < ' + id + '; ++' + aux + '){\n';
 			tmp += parseExpression();
 			tmp += '}\n';
@@ -178,9 +180,9 @@ function generateParser(str){
 			
 		}else if(hasIdentifier()){
 			var id = parseIdentifier();
-			if(!varTypes.hasOwnProperty(id)) throw "Unknown variable " + id;
+			if(!varTypes.hasOwnProperty(id)) throw new Error("Unknown variable " + id);
 			
-			if(str[i] != '*') throw "Expected * after " + id + ", got " + str[i];
+			if(str[i] != '*') throw new Error("Expected * after " + id + ", got " + str[i]);
 			++i;
 			
 			var aux = allocTmp();
@@ -204,23 +206,27 @@ function generateParser(str){
 			return '@\n';
 		}
 		
-		throw "Unexpected character " + str[i];
+		throw new Error("Unexpected character " + str[i]);
 	}
-	
 	function parseStatement(){
 		var backtrack = i;
 		if(hasIdentifier()){
 			var id = parseIdentifier();
 			if(str[i] == '='){
 				++i;
-				var p = parseFormat();
-				if(p.specifier == 's'){
-					throw "Cannot assign a string to " + id;
+				
+				if(varTypes.hasOwnProperty(id)){
+					throw new Error("Variable already exists: " + id);
 				}
 				
-				var tmp = p.type + ' ' + id + ';\n';
-				tmp += 'scanf("' + p.format + '", &' + id + ');\n';
-				varTypes[id] = p.type;
+				var format = parseFormat();
+				if(format.specifier == 's'){
+					throw new Error("Cannot assign a string to " + id);
+				}
+				
+				var tmp = format.type + ' ' + id + ';\n';
+				tmp += scanf(format, id);
+				varTypes[id] = format.type;
 				return tmp;
 			}else{
 				i = backtrack;
@@ -230,6 +236,21 @@ function generateParser(str){
 		return parseExpression();
 	}
 	
+	
+	function scanf(format, id){
+		if(id == null && format.isIgnored){
+			return 'scanf("' + format.ignoredFormat + '");\n';
+		}else{
+			if(id == null) id = allocTmp();
+			
+			var tmp = 'scanf("' + format.format + '", &' + id + ');\n';
+			if(!format.isIgnored){
+				tmp += 'printf("' + format.format + '", ' + id + ');\n';
+			}
+			return tmp;
+		}
+	}
+	
 	var curVarCode = 0;
 	function allocTmp(){
 		return "tmp" + curVarCode++;
@@ -237,11 +258,18 @@ function generateParser(str){
 	
 	var code = "";
 	
+	code += '#include <stdio.h>\n';
+	code += '#include <stdlib.h>\n';
+	code += '\n';
+	code += 'int main(){\n';
+	
 	str = str.replace(/\s+/g, '');
 	
 	while(i < str.length){
 		code += parseStatement();
 	}
+	
+	code += '}\n';
 	
 	return code;
 }
@@ -249,3 +277,4 @@ function generateParser(str){
 console.log(generateParser("%*d*(%d*%d @)"));
 console.log(generateParser("%*d*(b=%d %d b*%d @)"));
 console.log(generateParser("%*d*(%d*(%d %d) @)"));
+console.log(generateParser("%*d*(%s @)"));
