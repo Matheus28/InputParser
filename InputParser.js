@@ -346,7 +346,7 @@ function generateParser(str){
 	code += '		int ch = getchar();\n';
 	code += '		if(ch == EOF || isspace(ch)) break;\n';
 	code += '		\n';
-	code += '		if(len + 1 >= capacity){\n';
+	code += '		if(len + 2 >= capacity){\n';
 	code += '			capacity *= 2;\n';
 	code += '			str = realloc(str, capacity);\n';
 	code += '		}\n';
