@@ -8,6 +8,25 @@ function generateParser(str, atValue){
 	
 	var varTypes = {};
 	
+	function removeWhitespace(str){
+		var out = "";
+		var inString = false;
+		for(var i = 0; i < str.length; ++i){
+			if(str[i] == '"') inString = !inString;
+			
+			if(!inString){
+				if(str[i] == ' ' || str[i] == '\r' || str[i] == '\n' || str[i] == '\t') continue;
+			}
+			
+			out += str[i];
+		}
+		return out;
+	}
+	
+	
+	
+	
+	
 	function parseFormat(){
 		var start = i;
 		if(str[i] != '%') throw new Error("Expected %, got " + str[i]);
@@ -351,7 +370,6 @@ function generateParser(str, atValue){
 	code += '\n';
 	code += 'int main(){\n';
 	
-	str = str.replace(/\s+/g, '');
 	
 	while(i < str.length){
 		code += formatCode(parseStatement(), 1);
@@ -404,5 +422,6 @@ console.log(generateParser("%*d*(%s @)"));
 console.log(generateParser('%*d*"he"'));
 console.log(generateParser('%*d**"he"'));
 console.log(generateParser('%8c'));
-
+console.log(generateParser("%*d*(%d*(%f %f) @)"));
+console.log(generateParser('"should %d %f %s be escaped"'));
 
