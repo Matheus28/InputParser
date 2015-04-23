@@ -170,7 +170,7 @@ function generateParser(str, atValue){
 	}
 	
 	function hasFormat(){
-		return str[i] == '%';
+		return str[i] == '%' && str[i + 1] != '%';
 	}
 	
 	function hasMult(){
