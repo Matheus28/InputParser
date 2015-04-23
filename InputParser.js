@@ -25,9 +25,6 @@ function generateParser(str, atValue){
 	
 	str = removeWhitespace(str);
 	
-	
-	
-	
 	function parseFormat(){
 		var start = i;
 		if(str[i] != '%') throw new Error("Expected %, got " + str[i]);
