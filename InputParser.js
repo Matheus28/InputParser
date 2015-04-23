@@ -1,6 +1,9 @@
 
-function generateParser(str){
+function generateParser(str, atValue){
+	atValue = atValue || "@";
+	
 	var i = 0;
+	var code = "/* " + str + " */\n";
 	
 	var varTypes = {};
 	
@@ -204,7 +207,7 @@ function generateParser(str){
 			return tmp;
 		}else if(str[i] == '@'){
 			++i;
-			return '@\n';
+			return atValue + '\n';
 		}else if(str[i] == '"' || (str[i] == '*' && str[i + 1] == '"')){
 			var isIgnored = false;
 			if(str[i] == '*'){
@@ -324,7 +327,6 @@ function generateParser(str){
 		return "tmp" + curVarCode++;
 	}
 	
-	var code = "";
 	
 	code += '#include <stdio.h>\n';
 	code += '#include <stdlib.h>\n';
