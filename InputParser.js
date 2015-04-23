@@ -297,34 +297,36 @@ function generateParser(str, atValue){
 	}
 	
 	function scanf(format, id){
-		if(id == null && format.isIgnored){
-			return 'if(scanf("' + format.ignoredFormat + '") != 0) return 1;\n';
-		}else{
-			var tmp = '';
-			var hasAmpersand = true;
-			if(id == null){
-				id = allocTmp();
-				tmp += declVariable(format, id);
-			}
-			
-			if(format.specifier == 'c' && format.width != null){
-				hasAmpersand = false;
-			}
-			
-			if(format.specifier == 's'){
-				if(format.length != "") throw new Error("Scanning wide strings isn't supported yet");
-				needsScanString = true;
-				tmp += id + ' = scan_string(' + (format.isIgnored ? '0' : '1') + ');\n';
-				tmp += 'if(' + id + ' == NULL) return 1;\n'
-			}else{
-				tmp += 'if(scanf(" ' + format.format + '", ' + (hasAmpersand ? '&' : '') + id + ') != 1) return 1;\n';
-				if(!format.isIgnored){
-					tmp += 'printf("' + format.format + ' ", ' + id + ');\n';
-				}
-			}
-			
-			return tmp;
+		// We cannot use this because the generated scanf always returns 0, so we can't really
+		// check if it was successful
+		//if(id == null && format.isIgnored){
+		//	return 'if(scanf("' + format.ignoredFormat + '") != 0) return 1;\n';
+		//}
+		
+		var tmp = '';
+		var hasAmpersand = true;
+		if(id == null){
+			id = allocTmp();
+			tmp += declVariable(format, id);
 		}
+		
+		if(format.specifier == 'c' && format.width != null){
+			hasAmpersand = false;
+		}
+		
+		if(format.specifier == 's'){
+			if(format.length != "") throw new Error("Scanning wide strings isn't supported yet");
+			needsScanString = true;
+			tmp += id + ' = scan_string(' + (format.isIgnored ? '0' : '1') + ');\n';
+			tmp += 'if(' + id + ' == NULL) return 1;\n'
+		}else{
+			tmp += 'if(scanf(" ' + format.format + '", ' + (hasAmpersand ? '&' : '') + id + ') != 1) return 1;\n';
+			if(!format.isIgnored){
+				tmp += 'printf("' + format.format + ' ", ' + id + ');\n';
+			}
+		}
+		
+		return tmp;
 	}
 	
 	function countChar(str, ch){
