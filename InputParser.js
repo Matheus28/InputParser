@@ -391,7 +391,7 @@ function generateParser(str, atValue){
 		code += '	\n';
 		code += '	int capacity = 64;\n';
 		code += '	int len = 0;\n';
-		code += '	char *str = malloc(capacity);\n';
+		code += '	char *str = (char*) malloc(capacity);\n';
 		code += '	\n';
 		code += '	for(;;){\n';
 		code += '		int ch = getchar();\n';
@@ -399,7 +399,7 @@ function generateParser(str, atValue){
 		code += '		\n';
 		code += '		if(len + 2 >= capacity){\n';
 		code += '			capacity *= 2;\n';
-		code += '			str = realloc(str, capacity);\n';
+		code += '			str = (char*) realloc(str, capacity);\n';
 		code += '		}\n';
 		code += '		\n';
 		code += '		if(printBack) putchar(ch);\n';
@@ -427,4 +427,5 @@ console.log(generateParser('%8c'));
 console.log(generateParser("%*d*(%d*(%f %f) @)"));
 console.log(generateParser('"should %d %f %s be escaped"'));
 console.log(generateParser('%*d*%c'));
+console.log(generateParser('%*d*%d*%s'));
 
