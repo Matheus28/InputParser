@@ -18,7 +18,10 @@ function generateParser(str, atValue){
 			isIgnored = true;
 		}
 		
+		var widthStart = i;
 		while(/^[0-9]$/.test(str[i])) ++i;
+		var widthEnd = i;
+		var width = widthStart != widthEnd ? parseInt(str.slice(widthStart, widthEnd), 10) : null;
 		
 		var length = "";
 		if(str[i] == 'h'){
@@ -136,7 +139,8 @@ function generateParser(str, atValue){
 			isIgnored: isIgnored,
 			type: type,
 			specifier: specifier,
-			length: length
+			length: length,
+			width: width
 		};
 	}
 	
@@ -159,6 +163,7 @@ function generateParser(str, atValue){
 		return str.slice(start, end);
 	}
 	
+	
 	function parseExpression(){
 		if(hasFormat()){
 			var format = parseFormat();
@@ -175,7 +180,8 @@ function generateParser(str, atValue){
 			var tmp = '';
 			var aux = allocTmp();
 			
-			tmp += format.type + ' ' + id + ', ' + aux + ';\n';
+			tmp += declVariable(format, id);
+			tmp += declVariable(format, aux);
 			tmp += scanf(format, id);
 			tmp += 'for(' + aux + ' = 0; ' + aux + ' < ' + id + '; ++' + aux + '){\n';
 			tmp += parseExpression();
@@ -248,7 +254,7 @@ function generateParser(str, atValue){
 					throw new Error("Cannot assign a string to " + id);
 				}
 				
-				var tmp = format.type + ' ' + id + ';\n';
+				var tmp = declVariable(format, id);
 				tmp += scanf(format, id);
 				varTypes[id] = format.type;
 				return tmp;
@@ -261,21 +267,33 @@ function generateParser(str, atValue){
 	}
 	
 	
+	function declVariable(format, id){
+		if(format.specifier == 'c' && format.width != null){
+			return format.type + ' ' + id + '[' + format.width + '];\n';
+		}
+		return format.type + ' ' + id + ';\n';
+	}
+	
 	function scanf(format, id){
 		if(id == null && format.isIgnored){
 			return 'scanf("' + format.ignoredFormat + '");\n';
 		}else{
 			var tmp = '';
+			var hasAmpersand = true;
 			if(id == null){
 				id = allocTmp();
-				tmp += format.type + ' ' + id + ';\n';
+				tmp += declVariable(format, id);
+			}
+			
+			if(format.specifier == 'c' && format.width != null){
+				hasAmpersand = false;
 			}
 			
 			if(format.specifier == 's'){
 				if(format.length != "") throw new Error("Scanning wide strings isn't supported yet");
 				tmp += id + ' = scan_string(' + (format.isIgnored ? '0' : '1') + ');\n';
 			}else{
-				tmp += 'scanf("' + format.format + '", &' + id + ');\n';
+				tmp += 'scanf("' + format.format + '", ' + (hasAmpersand ? '&' : '') + id + ');\n';
 				if(!format.isIgnored){
 					tmp += 'printf("' + format.format + ' ", ' + id + ');\n';
 				}
@@ -376,5 +394,6 @@ console.log(generateParser("%*d*(%d*(%d %d) @)"));
 console.log(generateParser("%*d*(%s @)"));
 console.log(generateParser('%*d*"he"'));
 console.log(generateParser('%*d**"he"'));
+console.log(generateParser('%8c'));
 
 
