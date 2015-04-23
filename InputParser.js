@@ -96,8 +96,8 @@ function generateParser(str){
 			
 			case 's':
 				switch(length){
-					case "":  type = "STRING"; break;
-					case "l": type = "WSTRING"; break;
+					case "":  type = "const char*"; break;
+					case "l": type = "const wchar_t*"; break;
 					default: throw new Error("Invalid input format " + res);
 				}
 			break;
@@ -132,7 +132,8 @@ function generateParser(str){
 			ignoredFormat: '%*' + format.slice(1),
 			isIgnored: isIgnored,
 			type: type,
-			specifier: specifier
+			specifier: specifier,
+			length: length
 		};
 	}
 	
@@ -241,14 +242,61 @@ function generateParser(str){
 		if(id == null && format.isIgnored){
 			return 'scanf("' + format.ignoredFormat + '");\n';
 		}else{
-			if(id == null) id = allocTmp();
-			
-			var tmp = 'scanf("' + format.format + '", &' + id + ');\n';
-			if(!format.isIgnored){
-				tmp += 'printf("' + format.format + '", ' + id + ');\n';
+			var tmp = '';
+			if(id == null){
+				id = allocTmp();
+				tmp += format.type + ' ' + id + ';\n';
 			}
+			
+			if(format.specifier == 's'){
+				if(format.length != "") throw new Error("Scanning wide strings isn't supported yet");
+				tmp += id + ' = scan_string(' + (format.isIgnored ? '0' : '1') + ');\n';
+			}else{
+				tmp += 'scanf("' + format.format + '", &' + id + ');\n';
+				if(!format.isIgnored){
+					tmp += 'printf("' + format.format + ' ", ' + id + ');\n';
+				}
+			}
+			
 			return tmp;
 		}
+	}
+	
+	function countChar(str, ch){
+		var c = 0;
+		for(var i = 0; i < str.length; ++i){
+			if(str[i] == ch) ++c;
+		}
+		return c;
+	}
+	
+	function formatCode(str, depth){
+		depth = depth || 0;
+		var res = "";
+		
+		var lines = str.split('\n');
+		for(var i = 0; i < lines.length; ++i){
+			var line = lines[i];
+			var plus = countChar(line, '{');
+			var minus = countChar(line, '}');
+			var diff = plus - minus;
+			
+			if(diff == 0){
+				for(var j = 0; j < depth; ++j) res += '\t';
+				res += line;
+			}else if(diff > 0){
+				for(var j = 0; j < depth; ++j) res += '\t';
+				res += line;
+				depth += diff;
+			}else{
+				depth += diff;
+				for(var j = 0; j < depth; ++j) res += '\t';
+				res += line;
+			}
+			
+			res += '\n';
+		}
+		return res;
 	}
 	
 	var curVarCode = 0;
@@ -260,13 +308,44 @@ function generateParser(str){
 	
 	code += '#include <stdio.h>\n';
 	code += '#include <stdlib.h>\n';
+	code += '#include <ctype.h>\n';
+	code += '\n';
+	code += 'const char *scan_string(char printBack){\n';
+	code += '	for(;;){\n';
+	code += '		int ch = getchar();\n';
+	code += '		if(ch == EOF) return NULL;\n';
+	code += '		if(isspace(ch)) continue;\n';
+	code += '		break;\n';
+	code += '	}\n';
+	code += '	\n';
+	code += '	int capacity = 64;\n';
+	code += '	int len = 0;\n';
+	code += '	char *str = malloc(capacity);\n';
+	code += '	\n';
+	code += '	for(;;){\n';
+	code += '		int ch = getchar();\n';
+	code += '		if(ch == EOF || isspace(ch)) break;\n';
+	code += '		\n';
+	code += '		if(len + 1 >= capacity){\n';
+	code += '			capacity *= 2;\n';
+	code += '			str = realloc(str, capacity);\n';
+	code += '		}\n';
+	code += '		\n';
+	code += '		if(printBack) putchar(ch);\n';
+	code += '		str[len++] = ch;\n';
+	code += '	}\n';
+	code += '	\n';
+	code += '	str[len] = 0;\n';
+	code += '	if(printBack) putchar(\' \');\n';
+	code += '	return str;\n';
+	code += '}\n';
 	code += '\n';
 	code += 'int main(){\n';
 	
 	str = str.replace(/\s+/g, '');
 	
 	while(i < str.length){
-		code += parseStatement();
+		code += formatCode(parseStatement(), 1);
 	}
 	
 	code += '}\n';
