@@ -454,7 +454,6 @@ console.log(generateParser('%*d*%d*2*%s'));
 console.log(generateParser('%*d*2*%d*%s'));
 console.log(generateParser('%*d*5*%d'));
 */
-console.log(generateParser('%*d*5*%daa'));
 
 if(typeof exports != 'undefined'){
 	exports.generateParser = generateParser;
