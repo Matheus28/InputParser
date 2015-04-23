@@ -23,6 +23,7 @@ function generateParser(str, atValue){
 		return out;
 	}
 	
+	str = removeWhitespace(str);
 	
 	
 	
@@ -248,11 +249,10 @@ function generateParser(str, atValue){
 			var tmp = str.slice(start, end);
 			var res = '';
 			
-			if(!isIgnored) res += 'printf(' + tmp + ');\n';
-			
-			tmp = tmp.replace(/%/g, "%%");
+			tmp = tmp.replace(/%/g, "%%%%");
 			
 			res += 'scanf(' + tmp + ');\n';
+			if(!isIgnored) res += 'printf(' + tmp + ');\n';
 			return res;
 		}
 		
