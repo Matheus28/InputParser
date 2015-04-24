@@ -18,4 +18,12 @@ We want to have a special character between each test case, so we split them. So
 
 If we have a problem with `t` test cases, and for each one we'll have a number `n`, and `n` strings: `%*d*(%d*%s @)`
 
-If we have a problem with `t` test cases, and for each one we'll have a nubmber `n`, and n^2 numbers: `%*d*(n=%d n*n*%d @)`
+If we have a problem with `t` test cases, and for each one we'll have a number `n`, and n^2 numbers: `%*d*(n=%d n*n*%d @)`
+
+## FAQ
+
+### Can it parse all possible inputs?
+No, but it can parse almost all inputs from those contests.
+
+### How can I do `X`?
+Feel free to submit an issue and I'll answer your question and add it to the FAQ.
